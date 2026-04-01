@@ -1,0 +1,130 @@
+app:
+  description: Databricks Managed MCP Server経由でUC FunctionsとVector Searchをツールとして利用するエージェント
+  icon: 🤖
+  icon_background: '#FFF3E0'
+  mode: agent-chat
+  name: ③ MCP Agent（UC Functions + Vector Search）
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai_api_compatible:0.0.40@1d12045e32101ae6f211d51c0f1f357dad5976b6c1189e19e39b609554cc4f7e
+    version: null
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: junjiem/mcp_sse:0.2.3@ce2b8fa30300474f51da7e7d38543a2d15f4b720aee305e1dad0a8fdf27b9892
+    version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: true
+    max_iteration: 10
+    strategy: function_call
+    tools:
+    - enabled: true
+      extra:
+        credentials_id: 07ee9b71-ba9d-4b1a-91a0-416d65c0eda6
+      isDeleted: false
+      notAuthor: false
+      provider_id: junjiem/mcp_sse/mcp_sse
+      provider_name: junjiem/mcp_sse/mcp_sse
+      provider_type: builtin
+      tool_label: Fetch MCP Tools
+      tool_name: mcp_sse_list_tools
+      tool_parameters: {}
+    - enabled: true
+      extra:
+        credentials_id: 07ee9b71-ba9d-4b1a-91a0-416d65c0eda6
+      isDeleted: false
+      notAuthor: false
+      provider_id: junjiem/mcp_sse/mcp_sse
+      provider_name: junjiem/mcp_sse/mcp_sse
+      provider_type: builtin
+      tool_label: Call MCP Tool
+      tool_name: mcp_sse_call_tool
+      tool_parameters: {}
+  annotation_reply:
+    enabled: false
+  chat_prompt_config:
+    prompt:
+    - role: system
+      text: ''
+  completion_prompt_config:
+    conversation_histories_role:
+      assistant_prefix: ''
+      user_prefix: ''
+    prompt:
+      text: ''
+  dataset_configs:
+    datasets:
+      datasets: []
+    retrieval_model: single
+    top_k: 4
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    allowed_file_extensions:
+    - .JPG
+    - .JPEG
+    - .PNG
+    - .GIF
+    - .WEBP
+    - .SVG
+    - .MP4
+    - .MOV
+    - .MPEG
+    - .WEBM
+    allowed_file_types: []
+    allowed_file_upload_methods:
+    - remote_url
+    - local_file
+    enabled: false
+    image:
+      detail: high
+      enabled: false
+      number_limits: 3
+      transfer_methods:
+      - remote_url
+      - local_file
+    number_limits: 3
+  model:
+    completion_params:
+      max_tokens: 2000
+      stop: []
+      temperature: 0.3
+    mode: chat
+    name: databricks-gpt-5-2
+    provider: langgenius/openai_api_compatible/openai_api_compatible
+  more_like_this:
+    enabled: false
+  opening_statement: TechNovaカスタマーサポートです。製品情報、注文履歴、ポリシーなどについてお気軽にお問い合わせください。
+  pre_prompt: 'あなたはTechNovaのカスタマーサポートです。
+
+    利用可能なツールを使って、顧客の質問に正確に回答してください。
+
+    回答は日本語で行ってください。
+
+
+    まず mcp_sse_list_tools でツール一覧を取得し、適切なツールを mcp_sse_call_tool で呼び出してください。'
+  prompt_type: simple
+  retriever_resource:
+    enabled: false
+  sensitive_word_avoidance:
+    enabled: false
+  speech_to_text:
+    enabled: false
+  suggested_questions:
+  - 返品ポリシーについて教えてください
+  - SmartWatch X100のバッテリー持続時間は？
+  - 顧客 naoki32@example.net の注文履歴を見せて
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form: []
+version: 0.6.0
+

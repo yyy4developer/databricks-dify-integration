@@ -1,0 +1,70 @@
+app:
+  description: DatabricksのAI Gateway経由でLLMを利用するチャットボット
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  mode: chat
+  name: ① LLM endpoint利用
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai_api_compatible:0.0.40@1d12045e32101ae6f211d51c0f1f357dad5976b6c1189e19e39b609554cc4f7e
+    version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: false
+    prompt: null
+    strategy: router
+    tools: []
+  annotation_reply:
+    enabled: false
+  chat_prompt_config: {}
+  completion_prompt_config: {}
+  dataset_configs:
+    datasets:
+      datasets: []
+      strategy: router
+    retrieval_model: multiple
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    image:
+      detail: high
+      enabled: false
+      number_limits: 3
+      transfer_methods:
+      - remote_url
+      - local_file
+  model:
+    completion_params:
+      max_tokens: 4096
+      stop: []
+      temperature: 0.7
+    mode: chat
+    name: yao-ai-agent-demo-gateway
+    provider: langgenius/openai_api_compatible/openai_api_compatible
+  more_like_this:
+    enabled: false
+  opening_statement: ''
+  pre_prompt: ''
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    configs: []
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions: []
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form: []
+version: 0.6.0
+

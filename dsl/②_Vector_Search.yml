@@ -1,0 +1,208 @@
+app:
+  description: Vector Search APIでセマンティック検索。PATのみで認証。LLMが検索結果を要約。
+  icon: 🤖
+  icon_background: '#E8F5E9'
+  mode: workflow
+  name: ② Vector Search（検索）
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai_api_compatible:0.0.40@1d12045e32101ae6f211d51c0f1f357dad5976b6c1189e19e39b609554cc4f7e
+    version: null
+kind: app
+version: 0.6.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 20
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        sourceType: start
+        targetType: http-request
+      id: e1
+      source: start
+      sourceHandle: source
+      target: http_node
+      targetHandle: target
+      type: custom
+    - data:
+        sourceType: http-request
+        targetType: llm
+      id: e2
+      source: http_node
+      sourceHandle: source
+      target: llm_node
+      targetHandle: target
+      type: custom
+    - data:
+        sourceType: llm
+        targetType: end
+      id: e3
+      source: llm_node
+      sourceHandle: source
+      target: end
+      targetHandle: target
+      type: custom
+    nodes:
+    - data:
+        selected: false
+        title: Start
+        type: start
+        variables:
+        - label: 質問を入力
+          max_length: 1000
+          required: true
+          type: text-input
+          variable: input
+      height: 109
+      id: start
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      type: custom
+      width: 242
+    - data:
+        authorization:
+          config:
+            api_key: <YOUR_DATABRICKS_PAT>
+            type: bearer
+          type: api-key
+        body:
+          data: '{"query_text": "{{#start.input#}}", "columns": ["content", "doc_uri"],
+            "num_results": 3}'
+          type: json
+        desc: ''
+        headers: Content-Type:application/json
+        method: post
+        params: ''
+        retry:
+          enabled: false
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 100
+        selected: false
+        timeout:
+          connect: 30
+          read: 120
+          write: 30
+        title: Databricks API
+        type: http-request
+        url: https://fevm-yao-sl-st.cloud.databricks.com/api/2.0/vector-search/indexes/yao_sl_st_catalog.ricoh_handson_code.knowledge_base_vs_index/query
+      height: 201
+      id: http_node
+      position:
+        x: 380
+        y: 282
+      positionAbsolute:
+        x: 380
+        y: 282
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            max_tokens: 2048
+            temperature: 0.3
+          mode: chat
+          name: databricks-gpt-5-2
+          provider: langgenius/openai_api_compatible/openai_api_compatible
+        prompt_template:
+        - role: system
+          text: '以下のAPIレスポンスを元に、ユーザーの質問に日本語で分かりやすく回答してください。 APIレスポンス: {{#http_node.body#}}
+            ユーザーの質問: {{#start.input#}}'
+        selected: false
+        title: 回答生成
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: llm_node
+      position:
+        x: 680
+        y: 282
+      positionAbsolute:
+        x: 680
+        y: 282
+      type: custom
+      width: 242
+    - data:
+        outputs:
+        - value_selector:
+          - llm_node
+          - text
+          variable: result
+        selected: false
+        title: End
+        type: end
+      height: 88
+      id: end
+      position:
+        x: 980
+        y: 282
+      positionAbsolute:
+        x: 980
+        y: 282
+      type: custom
+      width: 242
+    viewport:
+      x: 71
+      y: 28.5
+      zoom: 1
+  rag_pipeline_variables: []
+

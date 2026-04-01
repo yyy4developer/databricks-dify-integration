@@ -1,0 +1,85 @@
+app:
+  description: Databricks Vector Searchを外部ナレッジとして接続したChatbot。Difyの標準ナレッジ機能（引用表示、Top
+    K設定）が使える。
+  icon: 🤖
+  icon_background: '#FFF3E0'
+  mode: chat
+  name: ④ RAG Chatbot（External Knowledge）
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai_api_compatible:0.0.40@1d12045e32101ae6f211d51c0f1f357dad5976b6c1189e19e39b609554cc4f7e
+    version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: false
+    strategy: router
+    tools: []
+  annotation_reply:
+    enabled: false
+  chat_prompt_config: {}
+  completion_prompt_config: {}
+  dataset_configs:
+    datasets:
+      datasets:
+      - dataset:
+          enabled: true
+          id: dccaeb1a-7980-4f80-b02b-ebdeb41ad45a
+    retrieval_model: single
+    score_threshold: 0.3
+    score_threshold_enabled: true
+    top_k: 3
+  dataset_query_variable: null
+  external_data_tools: []
+  file_upload:
+    image:
+      detail: high
+      enabled: false
+      number_limits: 3
+      transfer_methods:
+      - remote_url
+      - local_file
+  model:
+    completion_params:
+      max_tokens: 2000
+      stop: []
+      temperature: 0.3
+    mode: chat
+    name: databricks-gpt-5-2
+    provider: langgenius/openai_api_compatible/openai_api_compatible
+  more_like_this:
+    enabled: false
+  opening_statement: TechNova製品サポートです。製品の仕様やトラブルシューティングについてお聞きください。
+  pre_prompt: 'あなたはTechNovaの製品サポートです。
+
+    以下のコンテキスト情報を元に、ユーザーの質問に日本語で正確に回答してください。
+
+    コンテキストに情報がない場合は、その旨を伝えてください。
+
+
+    コンテキスト:
+
+    {{#context#}}'
+  prompt_type: simple
+  retriever_resource:
+    enabled: false
+  sensitive_word_avoidance:
+    enabled: false
+  speech_to_text:
+    enabled: false
+  suggested_questions:
+  - SmartWatch X100のバッテリー持続時間は？
+  - NoiseGuard Proのノイズキャンセリング性能は？
+  - SmartWatch X200のセットアップ方法は？
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form: []
+version: 0.6.0
+

@@ -71,6 +71,25 @@ databricks bundle deploy
    - API Key: Databricks PATトークン
    - Completion mode: Chat / Context Size: 200000
 
+### 5. Difyアプリのインポート
+
+`dsl/` にエクスポート済みのアプリ定義（DSL）があります。
+Dify UI → 「DSLファイルをインポート」から各YAMLを読み込んでください。
+
+| ファイル | アプリ |
+|---------|--------|
+| `①_LLM_endpoint.yml` | Pattern 1: LLMモデル連携 |
+| `②_UC_SQL_API.yml` | Pattern 2: UC関数実行 |
+| `②_Vector_Search.yml` | Pattern 2: Vector Search |
+| `②_Genie_API_SQL.yml` | Pattern 2: Genie API |
+| `②_Knowledge_Assistant_KA.yml` | Pattern 2: KA |
+| `②_Supervisor_Agent_MAS.yml` | Pattern 2: MAS |
+| `②_Day1_Code_Agent.yml` | Pattern 2: Day1 Agent |
+| `③_MCP_Agent_UC_Functions_Vector_Search.yml` | Pattern 3: MCP Agent |
+| `④_RAG_Chatbot_External_Knowledge.yml` | Pattern 4: RAG Chatbot |
+
+> **注意**: インポート後、Model ProviderのAPI Key（Databricks PAT）は各自で設定が必要です。
+
 ## プロジェクト構成
 
 ```
@@ -83,6 +102,7 @@ databricks bundle deploy
 │   ├── 01-06_*.ipynb           # 各連携パターン
 │   ├── 07_summary.ipynb        # まとめ
 │   └── 99_cleanup.ipynb        # リソースクリーンアップ
+├── dsl/                        # Difyアプリ定義（DSLエクスポート）
 ├── dify/                       # Dify OSS (git submodule: yyy4developer/dify)
 │   ├── CUSTOMIZATIONS.md       # 公式からの変更履歴
 │   └── docker/
