@@ -1,0 +1,26 @@
+# Databricks x Dify Integration - 設定ファイル
+# 各自の環境に合わせて値を設定してください。
+
+# ========== Databricks Unity Catalog ==========
+catalog: ""          # 使用するカタログ名（例: yao_sl_st_catalog）
+schema: ""           # 使用するスキーマ名（例: dify_integration）
+volume_name: ""      # Volume名（例: raw_data）
+
+# ========== Vector Search ==========
+vector_search_endpoint_name: ""  # VS Endpoint名（例: dify_vs_endpoint）
+vector_search_index_name: ""     # VS Index名（例: knowledge_base_vs_index）
+embedding_model_name: ""         # 埋め込みモデル（例: databricks-qwen3-embedding-0-6b）
+
+# ========== LLM ==========
+llm_endpoint_name: ""    # FMAPI/AI Gatewayのモデル名（例: databricks-gpt-5-2）
+ai_gateway_url: ""       # AI Gateway URL（例: https://xxx.ai-gateway.cloud.databricks.com/mlflow/v1）
+
+# ========== MLflow ==========
+mlflow_experiment_name: ""  # MLflow Experiment名（例: dify_integration_tracing）
+
+# ========== Dify ==========
+dify_admin_email: ""     # Dify管理者メール（例: admin@dify-demo.local）
+dify_admin_password: ""  # Dify管理者パスワード（8文字以上、英数字含む）
+
+# ========== Genie ==========
+genie_space_id: ""       # Genie Space ID（Pattern 2/3で使用。例: 01efab12...）

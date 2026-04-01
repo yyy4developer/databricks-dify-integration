@@ -4,11 +4,6 @@ bundle:
 workspace:
   host: https://fevm-yao-sl-st.cloud.databricks.com
 
-variables:
-  cluster_id:
-    description: "Cluster ID for running notebooks"
-    default: ""
-
 targets:
   dev:
     mode: development
@@ -24,6 +19,8 @@ targets:
 sync:
   include:
     - "notebooks/**"
+    - "config.yaml"
+    - "pdfs/**"
   exclude:
     - "dify/**"
     - ".venv/**"
