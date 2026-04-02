@@ -20,8 +20,9 @@ sync:
   include:
     - "notebooks/**"
     - "config.yaml"
-    - "pdfs/**"
+    # PDFs are uploaded separately via `databricks workspace import-dir`
   exclude:
     - "dify/**"
     - ".venv/**"
     - "docs/**"
+    - "pdfs/**"

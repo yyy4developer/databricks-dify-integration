@@ -1,0 +1,18 @@
+# External Knowledge API - Dify x Databricks Vector Search 中間API
+#
+# Usage:
+#   cd middleware
+#   docker compose up -d
+#
+# config.yaml と .env の値に合わせて environment を設定してください。
+
+services:
+  external-knowledge-api:
+    build: ./external_knowledge_api
+    environment:
+      DATABRICKS_HOST: ${DATABRICKS_HOST}       # .env から読み込み
+      DATABRICKS_TOKEN: ${DATABRICKS_TOKEN}     # .env から読み込み
+      VS_INDEX_NAME: ${VS_INDEX_NAME:-yao_sl_st_catalog.dify_integration.knowledge_base_vs_index}
+      API_KEY: ${API_KEY:-dify-external-knowledge-key}
+    ports:
+      - "8089:8089"

@@ -1,9 +1,9 @@
 app:
-  description: Databricks Managed MCP Server経由でUC FunctionsとVector Searchをツールとして利用するエージェント
+  description: Databricks Managed MCP Server経由でUC Functions、Vector Search、Genieをツールとして利用するエージェント
   icon: 🤖
   icon_background: '#FFF3E0'
   mode: agent-chat
-  name: ③ MCP Agent（UC Functions + Vector Search）
+  name: ③ MCP Agent（UC Functions + Vector Search + Genie）
   use_icon_as_answer_icon: false
 dependencies:
 - current_identifier: null
@@ -20,7 +20,7 @@ kind: app
 model_config:
   agent_mode:
     enabled: true
-    max_iteration: 10
+    max_iteration: 15
     strategy: function_call
     tools:
     - enabled: true
@@ -107,7 +107,16 @@ model_config:
     回答は日本語で行ってください。
 
 
-    まず mcp_sse_list_tools でツール一覧を取得し、適切なツールを mcp_sse_call_tool で呼び出してください。'
+    まず mcp_sse_list_tools でツール一覧を取得し、適切なツールを mcp_sse_call_tool で呼び出してください。
+
+
+    Genie（query_space_*）を使う場合：
+
+    - query_space_* でクエリを送信すると、statusが FILTERING_CONTEXT 等で返ります
+
+    - 返されたconversation_idとmessage_idを使って poll_response_* を呼び出してください
+
+    - statusが COMPLETED になるまで poll_response_* を繰り返し呼んでください'
   prompt_type: simple
   retriever_resource:
     enabled: false
@@ -119,6 +128,7 @@ model_config:
   - 返品ポリシーについて教えてください
   - SmartWatch X100のバッテリー持続時間は？
   - 顧客 naoki32@example.net の注文履歴を見せて
+  - 商品は何件ありますか？
   suggested_questions_after_answer:
     enabled: false
   text_to_speech:
