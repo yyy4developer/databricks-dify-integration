@@ -5,20 +5,22 @@ Databricksにある程度詳しい方が、ガイドに従って自走でhands-o
 
 ## 連携パターン一覧
 
-| # | パターン | 方向 | 概要 | Notebook |
-|---|---------|------|------|----------|
-| 1 | LLMモデル連携 | Dify→DB | OpenAI互換エンドポイント経由でDatabricks LLMをDifyから利用 | `01_llm_integration` |
-| 2 | HTTP API連携 | Dify→DB | SQL API, Vector Search, Genie, Serving Endpoints | `02_http_api_integration` |
-| 3 | MCP Server連携 | Dify→DB | Managed MCP経由でUC Functions/Vector Search/Genieを公開 | `03_mcp_integration` |
-| 4 | RAGナレッジ連携 | Dify→DB | External Knowledge API経由でVector Searchを接続 | `04_rag_vector_search` |
-| 5 | Databricksオーケストレーター | DB→Dify | Databricks → Dify方向のバッチ処理 | `05_databricks_orchestrator` |
-| 6 | 観測性・MLOps連携 | 双方向 | MLflow Tracing + AI Judge | `06_observability` |
+| # | パターン | 方向 | Notebook |
+|---|---------|------|----------|
+| 0 | データセットアップ | — | `00_data_setup` |
+| 1 | LLMモデル連携 | Dify→DB | `01_llm_integration` |
+| 2 | HTTP API連携 | Dify→DB | `02_http_api_integration` |
+| 3 | MCP Server連携 | Dify→DB | `03_mcp_integration` |
+| 4 | RAGナレッジ連携 | Dify→DB | `04_rag_vector_search` |
+| 5 | Databricksオーケストレーター | DB→Dify | `05_databricks_orchestrator` |
+| 6 | 観測性・MLOps連携 | 双方向 | `06_observability` |
+
+> ビジネス向けサマリは [docs/summary.md](docs/summary.md)、技術的知見の詳細は [docs/findings.md](docs/findings.md) を参照。
 
 ## 前提条件
 
 - Databricks Workspace（Unity Catalog有効）
 - Docker / Docker Compose
-- Python 3.11+ / uv
 - VPN接続（IP ACL付きワークスペースの場合）
 
 ## セットアップ手順
@@ -33,113 +35,96 @@ cd databricks-dify-integration
 ### 2. 設定ファイルの編集
 
 ```bash
-# シークレット設定
-cp .env.example .env
-# .env を編集: DATABRICKS_HOST, DATABRICKS_TOKEN を設定
-
-# パラメータ設定
-# config.yaml を編集: catalog, schema, endpoint名等を設定
+# 設定ファイルをexampleからコピーして編集
+cp config.yaml.example config.yaml
+cp databricks.yml.example databricks.yml
+# config.yaml: catalog, schema, endpoint名等を設定
+# databricks.yml: workspace host を設定
 ```
+
+`config.yaml` の主要パラメータ:
+
+| パラメータ | 説明 |
+|-----------|------|
+| `catalog` / `schema` | Unity Catalog のカタログ・スキーマ名 |
+| `llm_endpoint_name` | LLMモデル名（FMAPI/AI Gateway） |
+| `ai_gateway_url` | AI Gateway URL |
+| `vector_search_endpoint_name` | Vector Search Endpoint名 |
+| `mlflow_experiment_name` | MLflow Experiment名 |
+| `obs_schema` / `delta_sync_table` | 観測性用スキーマ・テーブル名 |
+| `genie_space_id` | Genie Space ID（Pattern 2/3で使用） |
 
 ### 3. Difyの起動と初期設定
 
 ```bash
-# Dify起動
 cd dify/docker
 cp .env.example .env
 docker compose up -d
-
-# ログ確認
-docker compose logs -f api
 ```
 
-ブラウザで http://localhost にアクセスし、以下を実施:
+http://localhost にアクセスし、以下を実施:
 
-1. **管理者アカウント作成**: http://localhost/install でメール・パスワードを設定
-2. **プラグインインストール**: Settings → Plugin → Marketplace から以下をインストール
-   - `OpenAI-API-compatible` （Pattern 1, 2, 4, 6 で使用）
-   - `MCP SSE` （Pattern 3 で使用、v0.2.3以上）
+1. **管理者アカウント作成**: http://localhost/install
+2. **プラグインインストール**: Settings → Plugin → Marketplace
+   - `OpenAI-API-compatible`（Pattern 1, 2, 4, 6）
+   - `MCP SSE`（Pattern 3、v0.2.3以上）
 3. **Model Provider設定**: Settings → Model Provider → OpenAI-API-compatible
-   - Model Name: `config.yaml` の `llm_endpoint_name` と同じ値
-   - API endpoint URL: AI Gateway URL または `https://<workspace>/serving-endpoints/<model>/invocations`
-   - API Key: Databricks PAT
-   - Completion mode: Chat
+   - Model Name / API endpoint URL / API Key（PAT）/ Completion mode: Chat
 
-> **SSRFプロキシ**: Difyからの外部アクセスはSSRFプロキシ(Squid)経由です。
-> `.cloud.databricks.com` と `.ai-gateway.cloud.databricks.com` は許可済み。
-> カスタム変更の詳細は [dify/CUSTOMIZATIONS.md](https://github.com/yyy4developer/dify/blob/databricks-integration/CUSTOMIZATIONS.md) を参照。
+> SSRFプロキシ: `.cloud.databricks.com` と `.ai-gateway.cloud.databricks.com` は許可済み。
+> カスタム変更の詳細は [CUSTOMIZATIONS.md](https://github.com/yyy4developer/dify/blob/databricks-integration/CUSTOMIZATIONS.md) を参照。
 
 ### 4. Databricksリソースの構築
 
-Databricks Workspaceで `notebooks/00_data_setup.ipynb` を実行:
-- Catalog / Schema / Volume 作成
-- テーブル作成（products, customers, orders, support_tickets, policies）
-- PDFアップロード → knowledge_base テーブル生成
+```bash
+databricks bundle deploy
+```
 
-### 5. DSLインポート（オプション）
+Databricks Workspaceで `notebooks/00_data_setup.ipynb` を実行。
+
+### 5. Hands-on開始
+
+`notebooks/01_llm_integration.ipynb` から順に実施。各notebookに必要なリソース構築手順が含まれています。
+
+### 6. DSLインポート（オプション）
 
 `dsl/` にDifyアプリ定義ファイルがあります。Dify UI → **Studio** → **Import DSL File** でインポート可能。
-
-| ファイル | パターン |
-|---------|---------|
-| `01_LLM_endpoint.yml` | Pattern 1: LLMモデル連携 |
-| `02_UC_SQL_API.yml` | Pattern 2: UC関数実行 |
-| `02_Vector_Search.yml` | Pattern 2: Vector Search |
-| `02_Genie_API.yml` | Pattern 2: Genie API |
-| `03_MCP_Agent.yml` | Pattern 3: MCP Agent |
-| `04_RAG_Chatbot.yml` | Pattern 4: RAG Chatbot |
-
-`dsl/optional/` にはKA/MAS/Agent用のDSLもあります（構築済み環境向け）。
-
-> **注意**: インポート後、Model ProviderのAPI Key（Databricks PAT）は各自で設定が必要です。
-
-### 6. Hands-on開始
-
-`notebooks/01_llm_integration.ipynb` から順に実施してください。
-各notebookには必要なDatabricksリソースの構築手順が含まれています。
+`dsl/optional/` にはKA/MAS/Agent用DSLもあります（構築済み環境向け）。
 
 ## プロジェクト構成
 
 ```
 .
-├── config.yaml                 # パラメータ設定
-├── .env.example                # シークレットテンプレート
+├── config.yaml                 # パラメータ設定（各自で編集）
 ├── databricks.yml              # Databricks Asset Bundle設定
-├── pyproject.toml              # Python依存関係 (uv)
-├── pdfs/                       # PDFドキュメント（Volume uploadに使用）
-├── dsl/                        # Difyアプリ定義（DSLエクスポート）
-│   └── optional/               # KA/MAS/Agent用（構築済み環境向け）
-├── notebooks/
+├── notebooks/                  # Hands-on Notebooks
 │   ├── _config.ipynb           # 共通設定（config.yaml読み込み）
 │   ├── 00_data_setup.ipynb     # Databricksリソース構築
 │   ├── 01-06_*.ipynb           # 各連携パターン
 │   └── 99_cleanup.ipynb        # リソースクリーンアップ
+├── dsl/                        # Difyアプリ定義（DSLエクスポート）
+│   └── optional/               # KA/MAS/Agent用（構築済み環境向け）
+├── middleware/                  # Pattern 4: External Knowledge API中間サーバー
+├── pdfs/                       # PDFドキュメント（Volume uploadに使用）
 ├── dify/                       # Dify OSS (git submodule: yyy4developer/dify)
-│   └── CUSTOMIZATIONS.md       # 公式からの変更履歴
 └── docs/
-    ├── key_points.md           # 技術ノート
-    └── findings.md             # 検証で判明した技術的知見
+    ├── summary.md              # ビジネス向けサマリ
+    └── findings.md             # 技術的知見（検証結果詳細）
 ```
 
 ## トラブルシューティング
 
-- **プラグインインストール失敗**: `docker compose restart ssrf_proxy plugin_daemon`
-- **Databricks 403**: VPN接続確認、IP ACLにIP追加
-- **"Invalid encrypted data"**: Dify 1.13以降はパスワードをBase64エンコードして送信
-- **Redis RDB エラー**: `docker exec docker-redis-1 redis-cli CONFIG SET stop-writes-on-bgsave-error no`
+| 問題 | 対処 |
+|------|------|
+| プラグインインストール失敗 | `docker compose restart ssrf_proxy plugin_daemon` |
+| Databricks 403 | VPN接続確認、IP ACLにIP追加 |
+| "Invalid encrypted data" | Dify 1.13以降はパスワードをBase64エンコード |
+| Redis RDBエラー | `docker exec docker-redis-1 redis-cli CONFIG SET stop-writes-on-bgsave-error no` |
 
 ## クリーンアップ
 
-検証終了後、`notebooks/99_cleanup.ipynb` を実行してDatabricksリソースを削除してください。
-
 ```bash
-# Dify停止
-cd dify/docker
-docker compose down
+# Databricksリソース: notebooks/99_cleanup.ipynb を実行
+# Dify停止:
+cd dify/docker && docker compose down
 ```
-
-## 参考資料
-
-- [docs/findings.md](docs/findings.md) — 検証で判明した技術的知見
-- [docs/key_points.md](docs/key_points.md) — 詳細な技術ノート
-- [Dify CUSTOMIZATIONS.md](https://github.com/yyy4developer/dify/blob/databricks-integration/CUSTOMIZATIONS.md) — Dify本体のカスタム変更

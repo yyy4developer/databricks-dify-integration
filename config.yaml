@@ -15,8 +15,10 @@ embedding_model_name: "databricks-qwen3-embedding-0-6b"
 llm_endpoint_name: "databricks-gpt-5-2"
 ai_gateway_url: "https://7474654222866971.ai-gateway.cloud.databricks.com/mlflow/v1"
 
-# ========== MLflow ==========
+# ========== MLflow / Observability ==========
 mlflow_experiment_name: "dify_integration_tracing"
+obs_schema: "dify_observability"                  # トレース保存用スキーマ（例: dify_observability）
+delta_sync_table: "mlflow_trace_log_delta_sync"   # Delta Syncテーブル名（例: mlflow_trace_log_delta_sync）
 
 # ========== Dify ==========
 dify_admin_email: "admin@dify-demo.local"

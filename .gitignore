@@ -6,9 +6,16 @@ __pycache__/
 dist/
 build/
 
-# Dify docker volumes & env
+# Local config (copy from .example to create)
+config.yaml
+databricks.yml
+middleware/.env
+.env
+
+# Dify docker
 dify/docker/volumes/
 dify/docker/.env
+dify/docker/docker-compose.override.yml
 
 # IDE
 .idea/
@@ -21,7 +28,7 @@ Thumbs.db
 
 # Databricks
 .databricks/
+notebooks/.databricks/
 
 # Secrets
-.env
 *.pem

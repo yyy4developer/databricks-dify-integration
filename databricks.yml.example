@@ -1,0 +1,28 @@
+bundle:
+  name: databricks-dify-integration
+
+workspace:
+  host: https://fevm-yao-sl-st.cloud.databricks.com
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      root_path: /Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+
+  prod:
+    mode: production
+    workspace:
+      root_path: /Shared/.bundle/${bundle.name}/${bundle.target}
+
+sync:
+  include:
+    - "notebooks/**"
+    - "config.yaml"
+    # PDFs are uploaded separately via `databricks workspace import-dir`
+  exclude:
+    - "dify/**"
+    - ".venv/**"
+    - "docs/**"
+    - "pdfs/**"

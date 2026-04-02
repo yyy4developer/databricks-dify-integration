@@ -1,0 +1,28 @@
+# Databricks x Dify Integration - 設定ファイル
+# 各自の環境に合わせて値を設定してください。
+
+# ========== Databricks Unity Catalog ==========
+catalog: ""
+schema: ""
+volume_name: ""
+
+# ========== Vector Search ==========
+vector_search_endpoint_name: ""
+vector_search_index_name: ""
+embedding_model_name: ""
+
+# ========== LLM ==========
+llm_endpoint_name: ""
+ai_gateway_url: ""
+
+# ========== MLflow / Observability ==========
+mlflow_experiment_name: ""
+obs_schema: ""    # トレース保存用スキーマ（例: dify_observability）
+delta_sync_table: ""    # Delta Syncテーブル名（例: mlflow_trace_log_delta_sync）
+
+# ========== Dify ==========
+dify_admin_email: ""
+dify_admin_password: ""
+
+# ========== Genie ==========
+genie_space_id: ""    # Genie Space ID（Pattern 2/3で使用）
