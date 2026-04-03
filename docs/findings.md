@@ -13,15 +13,7 @@
 | ③ | MCP連携 | Dify→DB | ✅ 検証済み | 標準プロトコルでツール公開。設定が容易 | MCP SSEプラグイン依存。Vector Searchの引数名がREST APIと異なる |
 | ④ | RAG（External Knowledge） | Dify→DB | ⚠️ 紹介のみ | Dify標準ナレッジ機能の活用 | Vector Search APIとDify External Knowledge APIのフォーマット不一致。変換用中間APIサーバーが必要 |
 | ⑤ | Databricksオーケストレーター | DB→Dify | ⚠️ 紹介のみ | 大規模バッチAI処理に有効 | ローカルDockerのDifyにはDatabricksからアクセス不可（Cloud/パブリックデプロイが必要） |
-| ⑥ | 観測性/MLOps | Dify→DB | ✅ 検証済み | MLflow Experiment にトレース送信。AI Judgeで品質自動評価 | Experiment IDがワークスペース共有。一部バグあり |
-
-### 想定導入ロードマップ
-
-| Phase | 期間 | パターン | 目的 |
-|-------|------|---------|------|
-| Phase 1 | 1-2ヶ月 | ① LLM + ③ MCP + ⑥ トレーシング | Quick Win: 最小限の変更でガバナンス効果を実感 |
-| Phase 2 | 2-4ヶ月 | ② HTTP API拡張 + 認証強化 + AI Judge運用 | Deep Integration: ツール・ナレッジの一元化 |
-| Phase 3 | 4-6ヶ月 | ⑤ バッチ処理 + ④ External Knowledge + Databricks Apps | Full Governance: バッチ処理・品質管理の統合 |
+| ⑥ | 観測性/MLOps | Dify→DB | ✅ 検証済み | MLflow Experiment にトレース送信。Delta SyncでUC Delta tableに長期保存 | Zerobus OTEL直接はコード修正必要、アプリ識別不可 |
 
 ---
 
@@ -181,30 +173,85 @@ RETURN ai_query('serving_endpoint_name', question);
 
 ---
 
-## 5. Observability（MLflow Tracing）の制約
+## 5. Observability（MLflow Tracing）
 
-### Databricksネイティブプロバイダー
+### 概要
 
-Dify v1.10.1で追加されたDatabricks専用トレーシングプロバイダー。Agent/Chatbot/Workflowの全アプリタイプでMLflow Experimentにトレース送信可能。
+Dify v1.10.1で追加されたDatabricksネイティブトレーシングプロバイダーを使い、Agent/Chatbot/Workflowの全アプリタイプでMLflow Experimentにトレース送信が可能。UC Delta tableへの長期保存にはDelta Syncを使用する。
 
-| 連携案 | 仕組み | 推奨度 |
-|-------|--------|--------|
-| **Databricksネイティブ** | Dify組み込みプロバイダーで直接送信 | **◎ 推奨** |
-| MLflowプロバイダー | OSS MLflowサーバー経由 | ○ |
-| Langfuse経由 | Dify→Langfuse→ETL→Databricks | △ |
+2つの方式を検証した結果、**方式A: Delta Sync を推奨**とする。
 
-### Experiment IDスコープ
+---
 
-DatabricksプロバイダーのExperiment ID設定は**アプリごとに個別設定可能**。各アプリのMonitoring → Settingsで異なるExperiment IDを指定できる。
+### 方式A: Delta Sync（推奨）
 
+**データフロー**:
+```
+Dify App → Databricksネイティブプロバイダー → MLflow Experiment
+  → Delta Sync (~15分) → UC Delta table
+```
+
+**特徴**:
+- コード変更不要（Dify UI設定のみ）
+- Experiment IDはアプリごとに個別設定可能（Monitoring → Settings）
+- Delta Syncテーブルに `trace_location.mlflow_experiment.experiment_id` カラムがあり、複数アプリのトレースを識別可能
+- SQLで直接分析可能（スパン分布、レイテンシP95、時系列分析等）
+
+**設定**:
 ```
 Difyワークスペース
   ├── MCP Agent App   ──▶ Experiment A (ID: 123)
   ├── Workflow App     ──▶ Experiment B (ID: 456)
   └── Chatbot App     ──▶ Experiment C (ID: 789)
+         ↓ Delta Sync (~15分)
+  UC Delta table（experiment_idで識別可能）
 ```
 
-> 注意: 各アプリのMonitoringで個別に設定が必要（一括設定はない）。API (`/apps/<app_id>/trace-config`) でも設定可能。
+> 各アプリのMonitoringで個別に設定が必要（一括設定はない）。API (`/apps/<app_id>/trace-config`) でも設定可能。
+
+**制約**:
+- Delta Syncの遅延は約15分（リアルタイムではない）
+- "OpenTelemetry on Databricks" preview有効が必要
+
+---
+
+### 方式B: Zerobus OTEL Direct（参考/将来）
+
+**データフロー**:
+```
+Dify App → MLflow SDK（set_destination コード修正）
+  → 内部でOTEL protobufに変換 → Zerobus /api/2.0/otel/v1/traces
+  → UC OTEL table
+```
+
+MLflow SDKが内部的にZerobusのOTLPエンドポイントを使用していることをソースコードで確認済み（`databricks_rest_store.py` line 544: `endpoint = f"/api/2.0/otel{OTLP_TRACES_PATH}"`）。
+
+**特徴**:
+- リアルタイム（遅延なし）
+- UC OTEL tableに直接書き込み
+
+**制約（実用上の課題）**:
+- Difyコード修正が必要（`mlflow_trace.py` + `dify_graph` import修正 + `docker-compose.override.yml` ボリュームマウント）
+- UC OTEL tableに `experiment_id` がなく、同一スキーマ内のアプリを識別不可（MLflow 3.11.0でテーブルプレフィックスによる対応予定）
+- `set_destination` が `set_experiment` を上書きするため、方式Aと共存不可
+- Dify UIからdestination設定不可（環境変数のみ、全アプリに一律適用）
+- コード修正はDify forkブランチ `mlflow-zerobus-otel` に保存
+
+---
+
+### 方式比較
+
+| 観点 | A: Delta Sync（推奨） | B: Zerobus OTEL Direct |
+|------|---------------------|------------------------|
+| データフロー | Dify → Provider → Experiment → Delta Sync → UC table | Dify → MLflow SDK（修正） → OTEL → Zerobus → UC table |
+| コード変更 | なし（UI設定のみ） | 必要（mlflow_trace.py + docker） |
+| 遅延 | ~15分 | リアルタイム |
+| アプリ識別 | ✅ experiment_id がテーブルに含まれる | ❌ experiment_id なし（MLflow 3.11.0で対応予定） |
+| 方式Aとの共存 | — | ❌（set_destination が set_experiment を上書き） |
+| Dify UI制御 | アプリごとに個別設定可能 | 環境変数のみ（全アプリ一律） |
+| 推奨度 | **推奨** | 参考（将来の本番利用向け） |
+
+---
 
 ### スパンタイプとapp_nameの制約
 
@@ -248,46 +295,6 @@ ops_trace_manager.py:797 dataset_retrieval_trace
 ```
 
 `dataset_retrieval_trace` でタイマー情報が `None` になり、全トレース処理がクラッシュする。MCP Agent構成では `dataset_retrieval` を通らないため影響なし。修正されるまで **External Knowledge + トレーシング併用は不可**。
-
-### MLflow Trace Table（UC Delta Table）
-
-MLflow 3.9+ で `set_experiment_trace_location()` を使い、トレースをUC Delta tableに保存可能。
-
-- 自動生成テーブル: `mlflow_experiment_trace_otel_spans`, `_otel_logs`, `_otel_metrics`, `_metadata`, `_unified`
-- SQLで直接分析可能（スパン分布、レイテンシP95、時系列分析等）
-- **制約**: 既存トレースがあるExperimentにはリンク不可（新しいExperimentが必要）
-- **要件**: "OpenTelemetry on Databricks" preview有効
-
-方式Aと組み合わせて使用推奨: DifyネイティブプロバイダーでExperimentに送信 → UC tableにリンクして長期保存・SQL分析。
-
-### Zerobus OpenTelemetry（Dify OTEL連携）
-
-Difyは PR #17627 (2025-04-11 merged) でOpenTelemetry対応。`ENABLE_OTEL=true` で有効化。
-
-検証結果:
-- **OTLPエンドポイント**: `https://<workspace>/api/2.0/otel/v1/traces` はBeta利用可能
-- **カスタムヘッダー必要**: `X-Databricks-UC-Table-Name` をDifyのext_otel.pyに追加する修正が必要
-- **結果**: 1545 spans がUC Delta tableに到着
-- **トレース内容**: インフラレベル（DB SELECT/INSERT, Redis, HTTP, Celery）— LLM/ツール呼び出しは含まない
-- **service.name**: `langgenius/dify` で識別可能
-
-**方式Aとの補完関係**:
-| 方式 | トレース内容 | アプリ区別 |
-|------|------------|----------|
-| A: ネイティブ | LLM応答、ツール呼び出し | × |
-| C: OTEL | インフラ（DB, Redis, HTTP） | △ service.name |
-
-### 3方式の比較
-
-| 観点 | A: ネイティブ | B: Trace Table | C: Zerobus OTEL |
-|------|-------------|---------------|-----------------|
-| 設定容易さ | ◎ UI設定のみ | ○ MLflow API | △ env + コード修正 |
-| トレース内容 | LLM/ツール | Aと同じ（UC保存） | インフラ（DB/Redis/HTTP） |
-| アプリ区別 | ○ Experiment分離 | ○ (Aと同じ) | △ service.name |
-| SQL分析 | × (MLflow API) | ◎ | ◎ |
-| 長期保存 | △ Experiment依存 | ◎ UC table | ◎ UC table |
-| 対応状況 | ✅ GA | ✅ Preview | ⚠️ Beta + コード修正 |
-| **推奨** | **即時利用** | **A+B併用推奨** | **将来本番向け** |
 
 ---
 
@@ -410,13 +417,13 @@ Databricks（ガバナンス基盤）
 |------|------|
 | LLMモデル連携 | AI Gateway経由でGPT系モデルをDifyから利用 |
 | MCP連携 | UC Functions + Vector SearchをMCPで公開 |
-| トレーシング | DatabricksプロバイダーでMLflowにトレース送信 |
+| トレーシング | DatabricksプロバイダーでMLflowにトレース送信 + Delta SyncでUC table保存 |
 
 具体的なPoC内容:
 1. 実業務データでUC Functions（顧客検索、注文履歴等）を作成
 2. ドキュメントでVector Search Indexを構築
 3. MCP経由でDify Agentに接続し社内サポートBotとして運用開始
-4. MLflowトレーシングで品質モニタリング
+4. MLflowトレーシング + Delta Syncで品質モニタリング
 
 **Phase 2: Deep Integration（2-4ヶ月）**
 
