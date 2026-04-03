@@ -3,6 +3,31 @@
 Databricks と Dify の連携パターンを検証するためのリポジトリです。
 Databricksにある程度詳しい方が、ガイドに従って自走でhands-on検証できることを目指しています。
 
+## Dify Cloud版 vs Self-Host版
+
+Difyには複数のデプロイ形態があります。**本リポジトリはSelf-Host（Community Edition）を対象としています。**
+
+| | Cloud版（SaaS） | Self-Host Community版（本検証対象） |
+|---|---------|----------------------|
+| **デプロイ** | [cloud.dify.ai](https://cloud.dify.ai) | Docker Compose で自前環境に構築 |
+| **費用** | Sandbox（無料/200msg）〜 Team（$159/月/10,000msg） | 無料（インフラ費用のみ） |
+| **ワークスペース** | プランにより1〜複数 | 1（制限なし） |
+| **チームメンバー** | Sandbox: 1人 / Pro: 3人 / Team: 50人 | 制限なし（インフラ依存） |
+| **アプリ数** | Sandbox: 5 / Pro: 50 / Team: 200 | 制限なし |
+| **ナレッジストレージ** | Sandbox: 50MB / Pro: 5GB / Team: 20GB | 制限なし |
+| **カスタマイズ** | プラグインのみ | ソースコード修正も可能 |
+| **SSRFプロキシ** | 変更不可 | `squid.conf.template` でドメイン許可を追加可能 |
+| **データ主権** | Dify社インフラ経由 | 全データが自社環境内に留まる |
+| **Databricks接続** | IPが動的 → IP ACL制限のあるWSに接続困難 | 自社NW内 → VPN/IP ACL問題なし |
+
+> **Self-Hostを選択した理由**:
+> - Databricks連携ではSSRFプロキシのカスタマイズ（ドメイン許可追加）が必須
+> - IP ACL付きワークスペースへの安定接続にはSelf-Hostが適切
+> - トレーシング（観測性）の検証でDify内部コードの修正が必要なケースがある
+> - 本番環境ではデータ主権の観点からもSelf-Hostが推奨される
+>
+> Cloud版でもSSRFプロキシ以外の連携パターン（Pattern 1 LLM, Pattern 3 MCP等）はIP ACLなしのワークスペースで利用可能です。
+
 ## 連携パターン一覧
 
 | # | パターン | 方向 | Notebook |
