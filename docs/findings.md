@@ -15,7 +15,7 @@
 | ⑤ | Databricksオーケストレーター | DB→Dify | ⚠️ 紹介のみ | 大規模バッチAI処理に有効 | ローカルDockerのDifyにはDatabricksからアクセス不可（Cloud/パブリックデプロイが必要） |
 | ⑥ | 観測性/MLOps | Dify→DB | ✅ 検証済み | MLflow Experiment にトレース送信。AI Judgeで品質自動評価 | Experiment IDがワークスペース共有。一部バグあり |
 
-### 段階的導入ロードマップ
+### 想定導入ロードマップ
 
 | Phase | 期間 | パターン | 目的 |
 |-------|------|---------|------|
@@ -402,7 +402,7 @@ Databricks（ガバナンス基盤）
 | 共通部品 | UC Functions, Vector Search | **同じ部品を共有** |
 | 公開方法 | REST API (ResponsesAgent) | MCP / HTTP API |
 
-### Phase別ロードマップ
+### 想定Phase別ロードマップ
 
 **Phase 1: Quick Win（1-2ヶ月）**
 
