@@ -99,6 +99,12 @@ http://localhost にアクセスし、以下を実施:
 > SSRFプロキシ: `.cloud.databricks.com` と `.ai-gateway.cloud.databricks.com` は許可済み。
 > カスタム変更の詳細は [CUSTOMIZATIONS.md](https://github.com/yyy4developer/dify/blob/databricks-integration/CUSTOMIZATIONS.md) を参照。
 
+4. **Claude/Gemini対応パッチ（オプション）**: GPT系以外のモデルを使う場合に実行
+   ```bash
+   ./scripts/patch-dify-plugin.sh
+   ```
+   > GPT系モデルのみ利用する場合は不要です。詳細は [docs/findings.md](docs/findings.md) のセクション2を参照。
+
 ### 4. Databricksリソースの構築
 
 ```bash
@@ -129,6 +135,7 @@ Databricks Workspaceで `notebooks/00_data_setup.ipynb` を実行。
 │   └── 99_cleanup.ipynb        # リソースクリーンアップ
 ├── dsl/                        # Difyアプリ定義（DSLエクスポート）
 │   └── optional/               # KA/MAS/Agent用（構築済み環境向け）
+├── scripts/                    # ユーティリティスクリプト（プラグインパッチ等）
 ├── middleware/                  # Pattern 4: External Knowledge API中間サーバー
 ├── pdfs/                       # PDFドキュメント（Volume uploadに使用）
 ├── dify/                       # Dify OSS (git submodule: yyy4developer/dify)
